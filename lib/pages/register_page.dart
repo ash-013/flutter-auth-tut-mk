@@ -6,68 +6,96 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-class LoginPage extends StatefulWidget {
+class RegisterPage extends StatefulWidget {
   final VoidCallback onTapRegister;
-  const LoginPage({super.key, required this.onTapRegister});
+  const RegisterPage({super.key, required this.onTapRegister});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final usernameController = TextEditingController(); // use as email
+class _RegisterPageState extends State<RegisterPage> {
+  final usernameController = TextEditingController(); // email
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
     usernameController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _signUserIn() async {
+  Future<void> _signUserUp() async {
     HapticFeedback.lightImpact();
+
+    // Cache before awaits (avoids use_build_context_synchronously)
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final theme = Theme.of(context);
 
-    // Show blocking progress dialog
+    final email = usernameController.text.trim();
+    final pwd = passwordController.text;
+    final confirm = confirmPasswordController.text;
+
+    // ---- Client-side validation (no spinner for simple form errors) ----
+    if (email.isEmpty || pwd.isEmpty || confirm.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (pwd != confirm) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Passwords do not match'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (pwd.length < 6) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 6 characters'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // ---- Show progress only after passing validation ----
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Center(
+      builder: (context) => Center(
         child: CircularProgressIndicator(color: theme.colorScheme.primary),
       ),
     );
 
     try {
-      final email = usernameController.text.trim();
-      final pwd = passwordController.text;
-
-      if (email.isEmpty || pwd.isEmpty) {
-        throw FirebaseAuthException(
-          code: 'empty-fields',
-          message: 'Please enter both email and password.',
-        );
-      }
-
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: pwd,
       );
 
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(content: Text('Signed in successfully')),
+        const SnackBar(content: Text('Account created successfully')),
       );
-      // navigator.pushReplacement(...);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final msg = switch (e.code) {
+        // Common sign-up error codes
+        'email-already-in-use' => 'This email is already registered.',
         'invalid-email' => 'The email address is badly formatted.',
-        'user-not-found' => 'No user found for that email.',
-        'wrong-password' => 'Wrong password provided for that user.',
-        'user-disabled' => 'This account has been disabled.',
+        'operation-not-allowed' => 'Email/password accounts are not enabled.',
+        'weak-password' => 'Password is too weak.',
+        // From our own earlier validation, but keep a fallback text path:
         'empty-fields' => e.message ?? 'Please fill all fields.',
         _ => e.message ?? 'Authentication error (${e.code}).',
       };
@@ -81,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Sign-in failed: $e',
+          content: Text('Sign-up failed: $e',
               style: const TextStyle(color: Colors.white)),
           backgroundColor: Colors.red,
         ),
@@ -132,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                 const Icon(Icons.lock, size: 100),
                 const SizedBox(height: 15),
                 Text(
-                  'Welcome back you\'ve been missed!',
+                  "Let's create an account for you",
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
@@ -141,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 50),
 
-                // Email textfield (your 'username' acts as email for Firebase)
+                // Email
                 CustomTexfield(
                   controller: usernameController,
                   hintText: 'Enter your email',
@@ -150,35 +178,25 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Password textfield
+                // Password
                 CustomTexfield(
                   controller: passwordController,
-                  hintText: 'Enter your Password',
+                  hintText: 'Enter your password',
                   obscureText: true,
                   prefixIcon: const Icon(Icons.lock_outlined),
                 ),
                 const SizedBox(height: 15),
 
-                Padding(
-                  padding: const EdgeInsets.only(right: 29.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: () => HapticFeedback.lightImpact(),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                              color: Colors.blue, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
+                // Confirm password  ✅ uses confirmPasswordController
+                CustomTexfield(
+                  controller: confirmPasswordController,
+                  hintText: 'Confirm password',
+                  obscureText: true,
+                  prefixIcon: const Icon(Icons.lock_outlined),
                 ),
-                const SizedBox(height: 25),
-
-                // Sign in button
-                CustomButton(onTap: _signUserIn, text: 'Sign In'),
+                const SizedBox(height: 15),
+                // Sign up button
+                CustomButton(onTap: _signUserUp, text: 'Sign Up'),
 
                 const SizedBox(height: 30),
 
@@ -260,12 +278,12 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 50),
 
-                // Not a member? Register
+                // Already a member? Sign In
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Not a member?',
+                      'Already a member?',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.normal,
@@ -278,7 +296,7 @@ class _LoginPageState extends State<LoginPage> {
                         widget.onTapRegister();
                       },
                       child: const Text(
-                        'Register now',
+                        'Sign In',
                         style: TextStyle(
                             color: Colors.blue, fontWeight: FontWeight.bold),
                       ),

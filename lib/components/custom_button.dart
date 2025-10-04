@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 
 class CustomButton extends StatelessWidget {
   final VoidCallback onTap;
-  const CustomButton({super.key, required this.onTap});
+  final String text;
+  const CustomButton({super.key, required this.onTap, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class CustomButton extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            'Sign In',
+            text,
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,

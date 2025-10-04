@@ -1,5 +1,4 @@
 import 'package:auth_koko/pages/auth_page.dart';
-import 'package:auth_koko/pages/login_page.dart';
 import 'package:auth_koko/themes/themeMode.dart';
 import 'package:auth_koko/themes/theme_provider.dart';
 import 'package:flutter/material.dart';
