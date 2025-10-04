@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "106112278713",
+    "project_id": "authtutorialkoko-b0a9c",
+    "storage_bucket": "authtutorialkoko-b0a9c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:106112278713:android:a2a66a05989f049667bb68",
+        "android_client_info": {
+          "package_name": "com.example.auth_koko"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3q9b2KoxEUUGTY_lia0rdAhIr9-WQtZs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
