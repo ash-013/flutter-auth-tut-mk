@@ -1,5 +1,6 @@
 import 'package:auth_koko/components/custom_button.dart';
 import 'package:auth_koko/components/custom_texfield.dart';
+import 'package:auth_koko/services/auth_service.dart';
 import 'package:auth_koko/themes/theme_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -217,7 +218,10 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     // Google
                     GestureDetector(
-                      onTap: () => HapticFeedback.lightImpact(),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        AuthService().signInWithGoogle();
+                      },
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
